@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	dependencies "golang-lib/application/dependencies"
-	services "golang-lib/application/services"
+
+	dependencies "github.com/cerhlhgr/golang-lib/application/dependencies"
+	services "github.com/cerhlhgr/golang-lib/application/services"
 )
 
 var (

@@ -3,12 +3,12 @@ package application
 import (
 	"context"
 	"fmt"
-	"golang-lib/application"
-	"golang-lib/config"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/cerhlhgr/golang-lib/application"
+	"github.com/cerhlhgr/golang-lib/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

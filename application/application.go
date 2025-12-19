@@ -3,10 +3,11 @@ package application
 import (
 	"context"
 	"fmt"
-	httpPkg "golang-lib/http"
 	"net/http"
 	"os/signal"
 	"syscall"
+
+	httpPkg "github.com/cerhlhgr/golang-lib/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

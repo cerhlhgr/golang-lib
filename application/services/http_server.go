@@ -3,10 +3,11 @@ package application
 import (
 	"context"
 	"fmt"
-	"golang-lib/application"
-	httpPkg "golang-lib/http"
 	"log"
 	"net/http"
+
+	"github.com/cerhlhgr/golang-lib/application"
+	httpPkg "github.com/cerhlhgr/golang-lib/http"
 )
 
 const defaultServerName = "HTTP"
