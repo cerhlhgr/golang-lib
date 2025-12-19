@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	dependencies "github.com/cerhlhgr/golang-lib/application/dependencies"
-	services "github.com/cerhlhgr/golang-lib/application/services"
 )
 
 var (
@@ -15,11 +12,11 @@ var (
 )
 
 var (
-	httpServer = NewService("http_server", NoopActionFn, services.RunHTTPServer)
+	httpServer = NewService("http_server", NoopActionFn, runHTTPServer)
 )
 
 var (
-	Postgres = Dependency{name: "postgres", initFn: dependencies.InitDB, runFn: NoopActionFn}
+	Postgres = Dependency{name: "postgres", initFn: initDB, runFn: NoopActionFn}
 )
 
 type (

@@ -6,13 +6,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cerhlhgr/golang-lib/application"
 	httpPkg "github.com/cerhlhgr/golang-lib/http"
 )
 
 const defaultServerName = "HTTP"
 
-func RunHTTPServer(ctx context.Context, a *application.Application) error {
+func runHTTPServer(ctx context.Context, a *Application) error {
 	h := a.HTTP
 	if h == nil {
 		// provide a default mux so developer doesn't need to wire it in main

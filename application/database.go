@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cerhlhgr/golang-lib/application"
 	"github.com/cerhlhgr/golang-lib/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func InitDB(ctx context.Context, a *application.Application) error {
+func initDB(ctx context.Context, a *Application) error {
 	pool, err := newPostgresPool(ctx)
 	if err != nil {
 		log.Fatal(err)
