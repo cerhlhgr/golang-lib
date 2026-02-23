@@ -10,6 +10,7 @@ import (
 	httpPkg "github.com/cerhlhgr/golang-lib/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/minio/minio-go/v7"
 )
 
 type Application struct {
@@ -20,6 +21,7 @@ type Application struct {
 	services     entities
 
 	PGConn *pgxpool.Pool
+	S3     *minio.Client
 
 	closers []func() error
 }

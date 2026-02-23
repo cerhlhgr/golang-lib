@@ -17,6 +17,7 @@ var (
 
 var (
 	Postgres = Dependency{name: "postgres", initFn: initDB, runFn: NoopActionFn}
+	S3       = Dependency{name: "s3", initFn: initS3, runFn: NoopActionFn}
 )
 
 type (
