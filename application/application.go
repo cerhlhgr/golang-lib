@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/cerhlhgr/golang-lib/db"
@@ -25,6 +26,9 @@ type Application struct {
 	S3       *minio.Client
 
 	closers []func() error
+
+	dependenciesInitOnce sync.Once
+	dependenciesInitErr  error
 }
 
 func newApplication() *Application {
@@ -75,12 +79,8 @@ func (a *Application) Run(ctx context.Context) error {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	for _, dep := range a.dependencies {
-		if dep.initFn != nil {
-			if err := dep.initFn(ctx, a); err != nil {
-				return err
-			}
-		}
+	if err := a.initDependencies(ctx); err != nil {
+		return err
 	}
 
 	for _, svc := range a.services {
@@ -97,6 +97,22 @@ func (a *Application) Run(ctx context.Context) error {
 }
 
 func (a *Application) AddCloser(f func() error) { a.closers = append(a.closers, f) }
+
+func (a *Application) initDependencies(ctx context.Context) error {
+	a.dependenciesInitOnce.Do(func() {
+		for _, dep := range a.dependencies {
+			if dep.initFn == nil {
+				continue
+			}
+			if err := dep.initFn(ctx, a); err != nil {
+				a.dependenciesInitErr = err
+				return
+			}
+		}
+	})
+
+	return a.dependenciesInitErr
+}
 
 func (a *Application) Close() error {
 	var retErr error
