@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/cerhlhgr/golang-lib/db"
 	httpPkg "github.com/cerhlhgr/golang-lib/http"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/cerhlhgr/golang-lib/redis"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -20,8 +20,9 @@ type Application struct {
 	dependencies entities
 	services     entities
 
-	PGConn *pgxpool.Pool
-	S3     *minio.Client
+	Database *db.Instance
+	Redis    *redis.Instance
+	S3       *minio.Client
 
 	closers []func() error
 }
