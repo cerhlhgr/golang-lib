@@ -23,6 +23,15 @@ func MustString(key string) string {
 	return v
 }
 
+func RequiredString(key string) (string, error) {
+	v, ok := os.LookupEnv(key)
+	if !ok || strings.TrimSpace(v) == "" {
+		return "", fmt.Errorf("missing required env: %s", key)
+	}
+
+	return strings.TrimSpace(v), nil
+}
+
 func GetInt(key string, def int) int {
 	v, ok := os.LookupEnv(key)
 	if !ok {

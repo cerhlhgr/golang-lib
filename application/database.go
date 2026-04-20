@@ -3,59 +3,74 @@ package application
 import (
 	"context"
 	"fmt"
-	"log"
-	"strings"
-	"time"
-
-	"github.com/cerhlhgr/golang-lib/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func initDB(ctx context.Context, a *Application) error {
-	pool, err := newPostgresPool(ctx)
-	if err != nil {
-		log.Fatal(err)
+	if a.PGConn != nil {
+		return nil
 	}
 
-	a.AddCloser(
-		func() error {
-			fmt.Println("closing database connection")
-			pool.Close()
-			return nil
-		},
-	)
+	cfg := a.postgresConfig
+	if cfg == nil {
+		parsed := PostgresConfigFromEnv()
+		cfg = &parsed
+	}
+
+	pool, err := newPostgresPool(ctx, *cfg)
+	if err != nil {
+		return err
+	}
+
+	a.AddCloserContext("postgres", func(context.Context) error {
+		pool.Close()
+		return nil
+	})
 
 	a.PGConn = pool
+	a.RegisterReadinessCheck("postgres", func(ctx context.Context) error {
+		return pool.Ping(ctx)
+	})
+	a.RegisterLivenessCheck("postgres", func(ctx context.Context) error {
+		return pool.Ping(ctx)
+	})
 
 	return nil
 }
 
-func newPostgresPool(ctx context.Context) (*pgxpool.Pool, error) {
-	dsn := config.MustString("POSTGRES_DSN")
-	if strings.TrimSpace(dsn) == "" {
-		return nil, fmt.Errorf("DATABASE_URL is empty")
+func newPostgresPool(ctx context.Context, pgCfg PostgresConfig) (*pgxpool.Pool, error) {
+	pgCfg.setDefaults()
+	if err := pgCfg.Validate(); err != nil {
+		return nil, err
 	}
 
-	cfg, err := pgxpool.ParseConfig(dsn)
+	cfg, err := pgxpool.ParseConfig(pgCfg.DSN)
 	if err != nil {
-		return nil, fmt.Errorf("parse DATABASE_DSN: %w", err)
+		return nil, fmt.Errorf("parse postgres dsn: %w", err)
 	}
 
-	cfg.MaxConns = int32(config.GetInt("PG_MAX_CONNS", 10))
-	cfg.MinConns = int32(config.GetInt("PG_MIN_CONNS", 0))
-	cfg.MaxConnLifetime = time.Hour
-	cfg.MaxConnIdleTime = 30 * time.Minute
-	cfg.HealthCheckPeriod = 1 * time.Minute
+	cfg.MaxConns = pgCfg.MaxConns
+	cfg.MinConns = pgCfg.MinConns
+	cfg.MaxConnLifetime = pgCfg.MaxConnLifetime
+	cfg.MaxConnIdleTime = pgCfg.MaxConnIdleTime
+	cfg.HealthCheckPeriod = pgCfg.HealthCheck
 
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	connectCtx, cancel := context.WithTimeout(ctx, pgCfg.ConnectTimeout)
+	defer cancel()
+
+	pool, err := pgxpool.NewWithConfig(connectCtx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool new: %w", err)
 	}
 
-	// проверка, что реально подключились
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("pg ping: %w", err)
+	if pgCfg.PingOnStart {
+		pingCtx, pingCancel := context.WithTimeout(ctx, pgCfg.PingTimeout)
+		defer pingCancel()
+
+		if err := pool.Ping(pingCtx); err != nil {
+			pool.Close()
+			return nil, fmt.Errorf("pg ping: %w", err)
+		}
 	}
 
 	return pool, nil
